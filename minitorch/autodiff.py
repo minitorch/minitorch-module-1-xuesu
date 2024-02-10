@@ -22,8 +22,11 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    # TODO: Implement for Task 1.1.
-    raise NotImplementedError("Need to implement for Task 1.1")
+    reduced_vals = list(vals)
+    added_vals = list(vals)
+    reduced_vals[arg] -= epsilon
+    added_vals[arg] += epsilon
+    return (f(*added_vals) - f(*reduced_vals)) / (2.0 * epsilon)
 
 
 variable_count = 1
@@ -51,7 +54,7 @@ class Variable(Protocol):
         pass
 
 
-def topological_sort(variable: Variable) -> Iterable[Variable]:
+def topological_sort(variable: Variable) -> List[Variable]:
     """
     Computes the topological order of the computation graph.
 
@@ -61,8 +64,19 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    vis = set()
+    que = [variable]
+    _ans = []
+    while len(que) > 0:
+        top_v = que[0]
+        que = que[1:]
+        if not top_v.is_constant():
+            _ans.append(top_v)
+            for parent_v in top_v.parents:
+                if parent_v.unique_id not in vis:
+                    vis.add(parent_v.unique_id)
+                    que.append(parent_v)
+    return _ans
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -76,8 +90,14 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    que = topological_sort(variable)
+    id2d = {variable.unique_id: deriv}
+    for v in que:
+        if v.is_leaf():
+            v.accumulate_derivative(id2d[v.unique_id])
+        if v.history.last_fn is not None:
+            for p_v, d in v.chain_rule(id2d[v.unique_id]):
+                id2d[p_v.unique_id] = id2d.get(p_v.unique_id, 0) + d
 
 
 @dataclass
