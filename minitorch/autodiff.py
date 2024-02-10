@@ -95,7 +95,7 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
     for v in que:
         if v.is_leaf():
             v.accumulate_derivative(id2d[v.unique_id])
-        if v.history.last_fn is not None:
+        else:
             for p_v, d in v.chain_rule(id2d[v.unique_id]):
                 id2d[p_v.unique_id] = id2d.get(p_v.unique_id, 0) + d
 
